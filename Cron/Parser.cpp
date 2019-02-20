@@ -44,16 +44,9 @@ namespace Cron
 	void Parser::parse(const std::string & expression)
 	{		
         std::regex matchedRegex;
-		std::istringstream extractor(expression);
-		std::vector<std::string> cronExpressions;
-		cronExpressions.reserve(cfFieldCount);
-		
-		while (!extractor.eof() and extractor.good())
-		{
-			std::string expr;
-			extractor >> expr;
-			cronExpressions.emplace_back(expr);
-		}
+        std::istringstream extractor(expression);
+        using IStreamIt = std::istream_iterator<std::string>;
+        std::vector<std::string> cronExpressions{IStreamIt{extractor}, IStreamIt{}};
 		if (cronExpressions.size() != cfFieldCount)
 		{
 			std::ostringstream oss;

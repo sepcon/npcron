@@ -6,10 +6,6 @@
 
 namespace Cron
 {
-//    const std::string Validator::constUnitValidRegexStr = "((((((RANGE)-(RANGE))|(RANGE))(\\/[1-9]+[0-9]*)*),)+((((RANGE)-(RANGE))|(RANGE))(\\/[1-9]+[0-9]*)*))|((((RANGE)-(RANGE))|(RANGE))(\\/[1-9]+[0-9]*)*)";
-//    const std::string Validator::constSubUnitValidRegexStr = "((((RANGE)-(RANGE))|(RANGE))(\\/[1-9]+[0-9]*)*)";
-//    const std::string Validator::constFieldValidationRegexStr = "(((((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*)(\\/[1-9]+[0-9]*)*),)+(((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*)(\\/[1-9]+[0-9]*)*))|(((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*)(\\/[1-9]+[0-9]*)*)";
-//    const std::string Validator::constSubFieldValidationRegexStr = "(((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*)(\\/[1-9]+[0-9]*)*)";
 const std::string Validator::constFieldValidationRegexStr = "(((((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*|\\*)(\\/[1-9]+[0-9]*)*),)+(((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*|\\*)(\\/[1-9]+[0-9]*)*))|(((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*|\\*)(\\/[1-9]+[0-9]*)*)";
 const std::string Validator::constSubFieldValidationRegexStr = "(((([0-9])([0-9])*-([0-9])([0-9])*)|([0-9])([0-9])*|\\*)(\\/[1-9]+[0-9]*)*)";
 
@@ -42,12 +38,36 @@ static const std::map<std::string, std::string> gWDayMap =
     { "SUN", "0" }, { "MON", "1" }, { "TUE", "2" }, { "WED", "3" }, { "THU", "4" }, { "FRI", "5" }, { "SAT", "6" }
 };
 
-static std::string replace(const std::string word, const std::string& with, const std::string& by);
+static std::string replace(std::string word, const std::string& with, const std::string& by)
+{
+    size_t pos = 0;
+    std::vector<size_t> foundPoses;
+    do
+    {
+        size_t foundPos = word.find(with, pos);
+        if (foundPos != std::string::npos)
+        {
+            foundPoses.push_back(foundPos);
+            pos = foundPos + with.size();
+        }
+        else
+        {
+            break;
+        }
+    } while (pos < word.size());
+    word.reserve(word.size() + foundPoses.size() * by.size());
+    for(auto rIt = foundPoses.rbegin(); rIt != foundPoses.rend(); ++rIt)
+    {
+        word.replace(*rIt, with.size(), by);
+    }
+    return word;
+}
 
 BadSyntaxException badSyntaxException(FieldType field, const std::string& expression)
 {
     return std::string("Invalid field ") + gFieldNames[field] + " with value: " + expression;
 }
+
 bool isValidExpression(int from, int to, int step, FieldType field)
 {
     int min = gValidFieldRanges[field].first;
@@ -137,13 +157,11 @@ bool Validator::validate()
             std::string subExpr = (*it).str();
             try
             {
-                std::cout << subExpr << std::endl;
                 validateSubExpression(subExpr);
             }
             catch(...)
             {
-                std::cout << subExpr << std::endl;
-//                throw ;
+                throw ;
             }
         }
     }
@@ -285,29 +303,4 @@ bool Validator::validateSubExpression(const std::string & subExpr)
     return _valid;
 }
 
-
-std::string replace(std::string word, const std::string& with, const std::string& by)
-{
-    size_t pos = 0;
-    std::vector<size_t> foundPoses;
-    do
-    {
-        size_t foundPos = word.find(with, pos);
-        if (foundPos != std::string::npos)
-        {
-            foundPoses.push_back(foundPos);
-            pos = foundPos + with.size();
-        }
-        else
-        {
-            break;
-        }
-    } while (pos < word.size());
-    word.reserve(word.size() + foundPoses.size() * by.size());
-    for(auto rIt = foundPoses.rbegin(); rIt != foundPoses.rend(); ++rIt)
-    {
-        word.replace(*rIt, with.size(), by);
-    }
-    return word;
-}
 }

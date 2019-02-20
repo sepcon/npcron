@@ -95,9 +95,9 @@ void Clock::syncWithLocalTime()
 
 void Clock::syncWithSpecialTime(const std::tm * tmTime)
 {
-	if (tmTime && _pYear)
+    if (tmTime && _pYear)
 	{
-		TimeUnit::specifyTime(_pYear, std::vector<int>{tmTime->tm_year, tmTime->tm_mon, tmTime->tm_mday, tmTime->tm_hour, tmTime->tm_min});
+        TimeUnit::specifyTime(_pYear, std::vector<int>{tmTime->tm_year, tmTime->tm_mon, tmTime->tm_mday, tmTime->tm_hour, tmTime->tm_min});
         TimeUnit::applyActionRecursivelyFromRoot(_pYear, [](TimeUnit* pUnit) { pUnit->calculatePosibRange(); return false;});
 	}
 }

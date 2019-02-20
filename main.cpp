@@ -26,41 +26,14 @@ void printWeekDay(int year, int mon, int day)
     }
 }
 
-void replace(std::string& word, const std::string& with, const std::string& by)
-{
-	size_t pos = 0;
-	std::vector<size_t> foundPoses;
-	do
-	{
-		size_t foundPos = word.find(with, pos);
-		if (foundPos != std::string::npos)
-		{
-			foundPoses.push_back(foundPos);
-			pos = foundPos + with.size();
-		}
-		else
-		{
-			break;
-		}
-	} while (pos < word.size());
-	word.reserve(word.size() + foundPoses.size() * by.size());
-    for (int i = static_cast<int>(foundPoses.size()) - 1; i >= 0; --i)
-	{
-		word.replace(foundPoses[i], with.size(), by);
-	}
-}
-
-#include <regex>
-
 int main()
 {
     try
     {
-        Cron::Parser parser("0 0 19 5 6,0");
-        Cron::Clock clock = parser.createClock();
-        for(int i = 0; i < 10; ++i)
+        Cron::Clock scheduler = Cron::Parser("5 4 * * *").createClock();
+        for(int i = 0; i < 70; ++i)
         {
-            printTime(clock.getNext());
+            printTime(scheduler.getNext());
         }
     }
     catch(Cron::BadSyntaxException& e)

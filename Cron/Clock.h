@@ -28,7 +28,7 @@ private:
     void moveFrom(Clock&& rhs);
     TimeUnit*   _pYear;
     TimeUnit*   _pMon;
-    TimeUnit*       _pDay;
+    TimeUnit*   _pDay;
     TimeUnit*   _pHour;
     TimeUnit*   _pMin;
 
