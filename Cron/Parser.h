@@ -16,6 +16,7 @@ namespace Cron
         void parse(const std::string& expression);
         Cron::Clock createClock();
 	private:
+        void reset();
         TimeUnit::PossibleValues _cronFieldValues[FieldType::cfFieldCount];
 	};
 	

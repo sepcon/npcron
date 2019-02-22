@@ -20,10 +20,13 @@ public:
     ~Clock();
     void syncWithLocalTime();
 	void syncWithSpecialTime(const std::tm* tmTime);
-    sysclock::time_point getNext();
+    sysclock::time_point getNext(bool fromNow = true);
+    sysclock::time_point getBack(bool fromNow = true);
     void specifyUnitsRange(const std::vector<TimeUnit::PossibleValues> &ranges);
 
 private:
+    enum StepDirection { BACK, NEXT };
+    sysclock::time_point doOneStep(StepDirection direction, bool fromNow);
     void cloneFrom(const Clock& rhs);
     void moveFrom(Clock&& rhs);
     TimeUnit*   _pYear;

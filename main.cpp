@@ -28,17 +28,30 @@ void printWeekDay(int year, int mon, int day)
 
 int main()
 {
-    try
+    std::string expression;
+    Cron::Parser parser;
+    do
     {
-        Cron::Clock scheduler = Cron::Parser("5 4 * * *").createClock();
-        for(int i = 0; i < 70; ++i)
+        std::cout << "Expression = " << std::endl;
+        try
         {
-            printTime(scheduler.getNext());
+//            std::getline(std::cin, expression);
+            expression = "0 * * * *";
+            std::cout << "Your expression is: " << expression << std::endl;
+            std::cin.clear();
+            parser.parse(expression);
+            Cron::Clock clock = parser.createClock();
+            for(int i = 0; i < 70; ++i)
+            {
+                printTime(clock.getBack(false));
+            }
         }
-    }
-    catch(Cron::BadSyntaxException& e)
-    {
-        std::cout << e << std::endl;
-    }
+        catch(Cron::BadSyntaxException& e)
+        {
+            std::cout << e << std::endl;
+        }
+        break;
+    } while(expression != "q");
+
     return 0;
 }

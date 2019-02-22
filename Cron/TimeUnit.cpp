@@ -22,8 +22,9 @@ int TimeUnit::operator++(int)
 
 int TimeUnit::operator++()
 {
-	return stepNext();
+    return stepNext();
 }
+
 
 bool TimeUnit::rangeAny() const
 {
@@ -58,10 +59,33 @@ void TimeUnit::setPosibValues(TimeUnit::PossibleValues &&range)
 
 void TimeUnit::resetToBeginning()
 {
-    _value = *_possibValues.begin();
-    if(_pChildUnit)
+    if(rangeAny())
     {
-        _pChildUnit->resetToBeginning();
+        return;
+    }
+    else
+    {
+        _value = *_possibValues.begin();
+        if(_pChildUnit)
+        {
+            _pChildUnit->resetToBeginning();
+        }
+    }
+}
+
+void TimeUnit::resetToLast()
+{
+    if(rangeAny())
+    {
+        return;
+    }
+    else
+    {
+        _value = *_possibValues.rbegin();
+        if(_pChildUnit)
+        {
+            _pChildUnit->resetToLast();
+        }
     }
 }
 
@@ -77,6 +101,41 @@ bool TimeUnit::isValidValue() const
     }
 }
 
+int TimeUnit::stepBack()
+{
+    if(rangeAny())
+    {
+        _value--;
+        if(_pChildUnit)
+        {
+            _pChildUnit->resetToLast();
+        }
+    }
+    else
+    {
+        auto currentPos = _possibValues.lower_bound(_value);
+        if( currentPos != _possibValues.begin())
+        {
+            _value = *(--currentPos);
+            if(_pChildUnit)
+            {
+                _pChildUnit->resetToLast();
+            }
+        }
+        else  //parent unit must step next
+        {
+            if(_pParentUnit)
+            {
+                _pParentUnit->stepBack();
+            }
+            else if(rangeAny())//means root unit
+            {
+                _value--;
+            }
+        }
+    }
+    return _value;
+}
 int TimeUnit::stepNext()
 {
     if(rangeAny())

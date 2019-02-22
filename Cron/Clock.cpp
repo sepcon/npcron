@@ -102,15 +102,42 @@ void Clock::syncWithSpecialTime(const std::tm * tmTime)
 	}
 }
 
-std::chrono::system_clock::time_point Clock::getNext()
+std::chrono::system_clock::time_point Clock::getNext(bool fromNow)
 {
+    return doOneStep(StepDirection::NEXT, fromNow);
+}
+
+std::chrono::system_clock::time_point Clock::getBack(bool fromNow)
+{
+    return doOneStep(StepDirection::BACK, fromNow);
+}
+
+void Clock::specifyUnitsRange(const std::vector<TimeUnit::PossibleValues>& ranges)
+{
+    size_t idx = TimeUnit::Year;
+    auto setPossibValues = [&idx, &ranges](TimeUnit* pUnit) -> bool { pUnit->_possibValues = ranges[idx++]; return false; };
+    TimeUnit::applyActionRecursivelyFromRoot(this->_pYear, setPossibValues);
+}
+
+std::chrono::system_clock::time_point Clock::doOneStep(Clock::StepDirection direction, bool fromNow)
+{
+    if(fromNow) syncWithLocalTime();
+    int (TimeUnit::*stepFuncion)();
+    if(direction == StepDirection::BACK)
+    {
+        stepFuncion = &TimeUnit::stepBack;
+    }
+    else if(direction == StepDirection::NEXT)
+    {
+        stepFuncion = &TimeUnit::stepNext;
+    }
     if(_pYear)
     {
         //year must be current year
-        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [](TimeUnit* pUnit) -> bool {
+        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [&stepFuncion](TimeUnit* pUnit) -> bool {
             if(!pUnit->isValidValue() || !pUnit->_pChildUnit)
             {
-                pUnit->stepNext();
+                (pUnit->*stepFuncion)();
                 return true;
             }
             else //last unit must be forced to move
@@ -130,13 +157,6 @@ std::chrono::system_clock::time_point Clock::getNext()
     {
         return std::chrono::system_clock::time_point();
     }
-}
-
-void Clock::specifyUnitsRange(const std::vector<TimeUnit::PossibleValues>& ranges)
-{
-    size_t idx = TimeUnit::Year;
-    auto setRange = [&idx, &ranges](TimeUnit* pUnit) -> bool { pUnit->_possibValues = ranges[idx++]; return false; };
-    TimeUnit::applyActionRecursivelyFromRoot(this->_pYear, setRange);
 }
 
 void Clock::cloneFrom(const Clock &rhs)

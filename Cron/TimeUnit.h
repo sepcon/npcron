@@ -28,6 +28,7 @@ public:
 	
 	int operator++(int);
 	int operator++();
+    int stepBack();
     int stepNext();
 
     int currentValue();
@@ -36,6 +37,7 @@ public:
     void setPosibValues(const PossibleValues& range);
     void setPosibValues(PossibleValues&& range);
     void resetToBeginning();
+    void resetToLast();
     bool isValidValue() const;
 
     static bool applyActionRecursivelyFromRoot(TimeUnit* pUnit, std::function<bool (TimeUnit*)> c);

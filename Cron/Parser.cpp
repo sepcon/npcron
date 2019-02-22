@@ -42,7 +42,8 @@ namespace Cron
 	}
 
 	void Parser::parse(const std::string & expression)
-	{		
+    {
+        this->reset();
         std::regex matchedRegex;
         std::istringstream extractor(expression);
         using IStreamIt = std::istream_iterator<std::string>;
@@ -67,9 +68,9 @@ namespace Cron
                         collectValues(_cronFieldValues[field], info);
                     }
                 }
-                catch(...)
+                catch(Cron::BadSyntaxException except)
                 {
-                    throw;
+                    throw "Bad Syntax at field " + std::to_string(field) + "[ " + cronExpressions[field] + " ]: " +  except;
                 }
             }
 			
@@ -94,6 +95,14 @@ namespace Cron
 
         clock.syncWithLocalTime();
         return clock;
+    }
+
+    void Parser::reset()
+    {
+        for(size_t i = 0; i < FieldType::cfFieldCount; ++i)
+        {
+            _cronFieldValues[i].clear();
+        }
     }
 
 
