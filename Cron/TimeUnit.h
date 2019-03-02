@@ -8,11 +8,12 @@
 namespace Cron
 {
 
+enum class RecursiveAction { STOP = true, NONSTOP = false};
+
 class TimeUnit
 {
 public:
     typedef typename std::set<int>  PossibleValues;
-
     enum TimeUnitType
     {
         Year = 0,
@@ -40,8 +41,8 @@ public:
     void resetToLast();
     bool isValidValue() const;
 
-    static bool applyActionRecursivelyFromRoot(TimeUnit* pUnit, std::function<bool (TimeUnit*)> c);
-    static bool applyActionRecursivelyFromLeaf(TimeUnit* pUnit, std::function<bool (TimeUnit*)> c);
+    static RecursiveAction applyActionRecursivelyFromRoot(TimeUnit* pUnit, std::function<RecursiveAction (TimeUnit*)> actionOn);
+    static RecursiveAction applyActionRecursivelyFromLeaf(TimeUnit* pUnit, std::function<RecursiveAction (TimeUnit *)> actionOn);
     static void specifyTime(TimeUnit* pClockWise, const std::vector<int>& cTime);
 
 protected:
@@ -67,8 +68,8 @@ public:
     virtual PossibleValues& calculatePosibRange() override;
 
 private:
-    PossibleValues _wDayRange;
-    PossibleValues _mDayRange;
+    PossibleValues _possibWDays;
+    PossibleValues _possibMDays;
 };
 
 }

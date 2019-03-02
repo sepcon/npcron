@@ -26,32 +26,34 @@ void printWeekDay(int year, int mon, int day)
     }
 }
 
+using namespace std::chrono;
+
 int main()
 {
     std::string expression;
     Cron::Parser parser;
-    do
+    expression = "28 21 * * MON-FRI/2";
+    std::cout << "Your expression is: " << expression << std::endl;
+    try
     {
-        std::cout << "Expression = " << std::endl;
-        try
+        parser.parse(expression);
+        auto clock = parser.createClock();
+        for(int i = 0; i < 5; ++i )
         {
-//            std::getline(std::cin, expression);
-            expression = "0 * * * *";
-            std::cout << "Your expression is: " << expression << std::endl;
-            std::cin.clear();
-            parser.parse(expression);
-            Cron::Clock clock = parser.createClock();
-            for(int i = 0; i < 70; ++i)
-            {
-                printTime(clock.getBack(false));
-            }
+            printTime(clock.getBack(false));
         }
-        catch(Cron::BadSyntaxException& e)
+//        clock.syncWithLocalTime();
+        for(int i = 0; i < 10000; ++i )
         {
-            std::cout << e << std::endl;
+            printTime(clock.getNext(false));
         }
-        break;
-    } while(expression != "q");
+    }
+    catch(const Cron::BadSyntaxException& s)
+    {
+        std::cout << s << std::endl;
+    }
+
+
 
     return 0;
 }

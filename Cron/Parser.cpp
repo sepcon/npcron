@@ -8,102 +8,127 @@
 
 namespace Cron
 {
-    static void collectValues(TimeUnit::PossibleValues& possibValues, const ExpInfo& info)
+namespace Internal
+{
+
+std::string toString(size_t timeField)
+{
+    static const char* fields[] =
     {
-        switch (info.type) {
-        case ExpType::SingleValue:
-            possibValues.insert(info.step);
-            break;
-        case ExpType::Range:
-        case ExpType::AnyValue:
-        case ExpType::StepFrom:
-        case ExpType::StepWholeRange:
-        case ExpType::StepFromTo:
-        {
-            int start = info.startValue;
-            do
-            {
-                possibValues.insert(start);
-                start += info.step;
-            } while(start <= info.endValue);
-        }
-            break;
-        default:
-            break;
-        }
+        "MINUTE",
+        "HOUR",
+        "MDAY",
+        "MONTH",
+        "WDAY"
+    };
+    if(timeField <= sizeof (fields) / sizeof(const char*))
+    {
+        return fields[timeField];
     }
-
-	Parser::Parser(const std::string & expression) 
-	{
-		if (!expression.empty())
-		{
-			parse(expression);
-		}
-	}
-
-	void Parser::parse(const std::string & expression)
+    else
     {
-        this->reset();
-        std::regex matchedRegex;
-        std::istringstream extractor(expression);
-        using IStreamIt = std::istream_iterator<std::string>;
-        std::vector<std::string> cronExpressions{IStreamIt{extractor}, IStreamIt{}};
-		if (cronExpressions.size() != cfFieldCount)
-		{
-			std::ostringstream oss;
-            oss << "The number of field is not correct\n Input is " << cronExpressions.size() << "\nCorrect is: " << cfFieldCount << " fields";
-			throw BadSyntaxException(oss.str().c_str());
-		}
-		else
-		{
-            Validator v;
-            for(size_t field = FieldType::cfMin; field < FieldType::cfFieldCount; ++field)
+        return "";
+    }
+}
+
+}
+
+static void collectValues(TimeUnit::PossibleValues& possibValues, const ExpInfo& info)
+{
+    switch (info.type) {
+    case ExpType::SingleValue:
+        possibValues.insert(info.step);
+        break;
+    case ExpType::Range:
+    case ExpType::AnyValue:
+    case ExpType::StepFrom:
+    case ExpType::StepWholeRange:
+    case ExpType::StepFromTo:
+    {
+        int start = info.startValue;
+        do
+        {
+            possibValues.insert(start);
+            start += info.step;
+        } while(start <= info.endValue);
+    }
+        break;
+    default:
+        break;
+    }
+}
+
+Parser::Parser(const std::string & expression)
+{
+    if (!expression.empty())
+    {
+        parse(expression);
+    }
+}
+
+void Parser::parse(const std::string & expression)
+{
+    this->reset();
+    std::regex matchedRegex;
+    std::istringstream extractor(expression);
+    using IStreamIt = std::istream_iterator<std::string>;
+    std::vector<std::string> cronExpressions{IStreamIt{extractor}, IStreamIt{}};
+    if (cronExpressions.size() != cfFieldCount)
+    {
+        std::ostringstream oss;
+        oss << "The number of field is not correct\n Input is " << cronExpressions.size() << "\nCorrect is: " << cfFieldCount << " fields";
+        throw BadSyntaxException(oss.str().c_str());
+    }
+    else
+    {
+        Validator v;
+        for(size_t field = FieldType::cfMin; field < FieldType::cfFieldCount; ++field)
+        {
+            try
             {
-                try
+                v.changeExpression(cronExpressions[field], static_cast<FieldType>(field));
+                auto subExpressionInfo = v.subExpressionInfo();
+                for(const auto& info : subExpressionInfo)
                 {
-                    v.changeExpression(cronExpressions[field], static_cast<FieldType>(field));
-                    auto subExpressionInfo = v.subExpressionInfo();
-                    for(const auto& info : subExpressionInfo)
-                    {
-                        collectValues(_cronFieldValues[field], info);
-                    }
-                }
-                catch(Cron::BadSyntaxException except)
-                {
-                    throw "Bad Syntax at field " + std::to_string(field) + "[ " + cronExpressions[field] + " ]: " +  except;
+                    collectValues(_cronFieldValues[field], info);
                 }
             }
-			
+            catch(Cron::BadSyntaxException except)
+            {
+                throw "Bad Syntax at field " + Internal::toString(field) + "[ " + cronExpressions[field] + " ]: " +  except;
+            }
         }
-	}
 
-
-    Clock Parser::createClock()
-    {
-        Clock clock;
-        clock._pMin->setPosibValues(_cronFieldValues[FieldType::cfMin]);
-        clock._pHour->setPosibValues(_cronFieldValues[FieldType::cfHour]);
-        static_cast<Cron::MDay*>(clock._pDay)->setMDayRange(_cronFieldValues[FieldType::cfMDay]);
-        static_cast<Cron::MDay*>(clock._pDay)->setWDayRange(_cronFieldValues[FieldType::cfWDay]);
-
-        TimeUnit::PossibleValues monthValues;
-        for(auto v : _cronFieldValues[FieldType::cfMon])
-        {
-            monthValues.insert(v - 1);
-        }
-        clock._pMon->setPosibValues(monthValues);
-
-        clock.syncWithLocalTime();
-        return clock;
     }
+}
 
-    void Parser::reset()
+
+Clock Parser::createClock()
+{
+    Clock clock;
+    clock._pMin->setPosibValues(_cronFieldValues[FieldType::cfMin]);
+    clock._pHour->setPosibValues(_cronFieldValues[FieldType::cfHour]);
+    static_cast<Cron::MDay*>(clock._pDay)->setMDayRange(_cronFieldValues[FieldType::cfMDay]);
+    static_cast<Cron::MDay*>(clock._pDay)->setWDayRange(_cronFieldValues[FieldType::cfWDay]);
+
+    TimeUnit::PossibleValues monthValues;
+    for(auto v : _cronFieldValues[FieldType::cfMon])
     {
-        for(size_t i = 0; i < FieldType::cfFieldCount; ++i)
-        {
-            _cronFieldValues[i].clear();
-        }
+        monthValues.insert(v - 1);
     }
+    clock._pMon->setPosibValues(monthValues);
+
+    clock.syncWithLocalTime();
+    return clock;
+}
+
+void Parser::reset()
+{
+    for(size_t i = 0; i < FieldType::cfFieldCount; ++i)
+    {
+        _cronFieldValues[i].clear();
+    }
+}
 
 
 

@@ -38,7 +38,7 @@ namespace Internal
 
     void deleteClockWise(TimeUnit** ppClockWise)
     {
-        TimeUnit::applyActionRecursivelyFromLeaf(*ppClockWise, [](TimeUnit* pUnit) -> bool { delete pUnit; return false; } );
+        TimeUnit::applyActionRecursivelyFromLeaf(*ppClockWise, [](TimeUnit* pUnit) { delete pUnit; return RecursiveAction::NONSTOP; } );
         *ppClockWise = nullptr;
     }
 }
@@ -88,6 +88,11 @@ Clock::~Clock()
     delete _pMin ;
 }
 
+bool Clock::isValid() const
+{
+    return _pMon && !_pMon->calculatePosibRange().empty();
+}
+
 void Clock::syncWithLocalTime()
 {
 	syncWithSpecialTime(TimeUtil::localTime());
@@ -98,57 +103,61 @@ void Clock::syncWithSpecialTime(const std::tm * tmTime)
     if (tmTime && _pYear)
 	{
         TimeUnit::specifyTime(_pYear, std::vector<int>{tmTime->tm_year, tmTime->tm_mon, tmTime->tm_mday, tmTime->tm_hour, tmTime->tm_min});
-        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [](TimeUnit* pUnit) { pUnit->calculatePosibRange(); return false;});
+        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [](TimeUnit* pUnit) { pUnit->calculatePosibRange(); return RecursiveAction::NONSTOP;});
 	}
 }
 
 std::chrono::system_clock::time_point Clock::getNext(bool fromNow)
 {
-    return doOneStep(StepDirection::NEXT, fromNow);
+    return doOneStep(&TimeUnit::stepNext, fromNow);
 }
 
 std::chrono::system_clock::time_point Clock::getBack(bool fromNow)
 {
-    return doOneStep(StepDirection::BACK, fromNow);
+    return doOneStep(&TimeUnit::stepBack, fromNow);
+}
+
+std::string Clock::getNextCTime(bool fromNow)
+{
+    auto next = sysclock::to_time_t(getNext(fromNow));
+    return std::string(std::ctime(&next));
+}
+
+std::string Clock::getBackCTime(bool fromNow)
+{
+    auto back = sysclock::to_time_t(getBack(fromNow));
+    return std::string(std::ctime(&back));
 }
 
 void Clock::specifyUnitsRange(const std::vector<TimeUnit::PossibleValues>& ranges)
 {
     size_t idx = TimeUnit::Year;
-    auto setPossibValues = [&idx, &ranges](TimeUnit* pUnit) -> bool { pUnit->_possibValues = ranges[idx++]; return false; };
+    auto setPossibValues = [&idx, &ranges](TimeUnit* pUnit) { pUnit->_possibValues = ranges[idx++]; return RecursiveAction::NONSTOP; };
     TimeUnit::applyActionRecursivelyFromRoot(this->_pYear, setPossibValues);
 }
 
-std::chrono::system_clock::time_point Clock::doOneStep(Clock::StepDirection direction, bool fromNow)
+std::chrono::system_clock::time_point Clock::doOneStep(int (TimeUnit::*step)(), bool fromNow)
 {
     if(fromNow) syncWithLocalTime();
-    int (TimeUnit::*stepFuncion)();
-    if(direction == StepDirection::BACK)
-    {
-        stepFuncion = &TimeUnit::stepBack;
-    }
-    else if(direction == StepDirection::NEXT)
-    {
-        stepFuncion = &TimeUnit::stepNext;
-    }
     if(_pYear)
     {
         //year must be current year
-        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [&stepFuncion](TimeUnit* pUnit) -> bool {
+        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [&step](TimeUnit* pUnit) {
+            pUnit->calculatePosibRange();
             if(!pUnit->isValidValue() || !pUnit->_pChildUnit)
             {
-                (pUnit->*stepFuncion)();
-                return true;
+                (pUnit->*step)();
+                return RecursiveAction::STOP;
             }
             else //last unit must be forced to move
             {
-                return false;
+                return RecursiveAction::NONSTOP;
             }
         });
         std::vector<int> vecTime;
-        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [&vecTime](TimeUnit* pUnit) -> bool {
+        TimeUnit::applyActionRecursivelyFromRoot(_pYear, [&vecTime](TimeUnit* pUnit) {
             vecTime.push_back(pUnit->currentValue());
-            return false;
+            return RecursiveAction::NONSTOP;
         });
         std::tm tmTime = TimeUtil::createTimeInfo(vecTime[TimeUnit::Year], vecTime[TimeUnit::Mon], vecTime[TimeUnit::Day], vecTime[TimeUnit::Hour], vecTime[TimeUnit::Min]);
         return sysclock::from_time_t(std::mktime(&tmTime));

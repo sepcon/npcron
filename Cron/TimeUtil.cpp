@@ -2,11 +2,30 @@
 
 namespace Cron {
 
+unsigned int TimeUtil::dayEndOfMonth(unsigned int month, int year)
+{
+    unsigned int maxPermonth = 31;
+    if (1 == month) //Febuary
+    {
+        if (TimeUtil::isLeapYear(year))
+        {
+            maxPermonth = 29;
+        }
+        else
+        {
+            maxPermonth = 28;
+        }
+    }
+    else if (month % 2 == 1)
+    {
+        maxPermonth = 30;
+    }
+    return maxPermonth;
+}
+
 std::tm* TimeUtil::localTime()
 {
-	std::time_t ttNow;
-	std::time(&ttNow);
-
+	auto ttNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	return std::localtime(&ttNow);
 }
 

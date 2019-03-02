@@ -1,6 +1,7 @@
 TEMPLATE = app
 CONFIG -= app_bundle
 CONFIG -= qt
+#CONFIG += console
 
 SOURCES += \
         main.cpp \
@@ -16,5 +17,6 @@ HEADERS += \
     Cron/CronValidator.h \
     Cron/Parser.h \
     Cron/TimeUnit.h \
-    Cron/TimeUtil.h
+    Cron/TimeUtil.h \
+    Cron/Exception.h
 

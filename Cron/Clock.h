@@ -18,15 +18,17 @@ public:
     Clock& operator=(const Clock& rhs);
     Clock& operator=(Clock&& rhs);
     ~Clock();
+    bool isValid() const;
     void syncWithLocalTime();
 	void syncWithSpecialTime(const std::tm* tmTime);
     sysclock::time_point getNext(bool fromNow = true);
     sysclock::time_point getBack(bool fromNow = true);
+    std::string getNextCTime(bool fromNow = true);
+    std::string getBackCTime(bool fromNow = true);
     void specifyUnitsRange(const std::vector<TimeUnit::PossibleValues> &ranges);
 
 private:
-    enum StepDirection { BACK, NEXT };
-    sysclock::time_point doOneStep(StepDirection direction, bool fromNow);
+    sysclock::time_point doOneStep(int (TimeUnit::*step)(), bool fromNow);
     void cloneFrom(const Clock& rhs);
     void moveFrom(Clock&& rhs);
     TimeUnit*   _pYear;

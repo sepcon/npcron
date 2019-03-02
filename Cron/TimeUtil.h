@@ -9,6 +9,7 @@ namespace Cron {
 class TimeUtil
 {
 public:
+    static unsigned int dayEndOfMonth(unsigned int month, int year);
 	static std::tm* localTime();
     static int getWeekDayOf(int year, int mon, int day);
     static bool isLeapYear(int year);

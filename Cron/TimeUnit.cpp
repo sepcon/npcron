@@ -5,6 +5,32 @@
 namespace Cron
 {
 
+namespace Internal
+{
+    TimeUnit::PossibleValues getMDayOf(const TimeUnit::PossibleValues& weekDays, int month, int year)
+    {
+        unsigned int maxPermonth = TimeUtil::dayEndOfMonth(month, year);
+        int startWDay = TimeUtil::getWeekDayOf(year, month, 1);
+        int deviate = startWDay - 1;
+        TimeUnit::PossibleValues allWDaysOfThisMonth;
+        for (unsigned int i = 1; i <= maxPermonth; ++i)
+        {
+            int wday = (deviate + static_cast<int>(i)) % 7;
+            if (weekDays.find(wday) != weekDays.end())
+            {
+                allWDaysOfThisMonth.insert(static_cast<int>(i));
+            }
+        }
+        return allWDaysOfThisMonth;
+    }
+
+    TimeUnit::PossibleValues getPossibMdays(const TimeUnit::PossibleValues& mDays, int month, int year)
+    {
+        unsigned int maxPerMonth =  TimeUtil::dayEndOfMonth(month, year);
+        return TimeUnit::PossibleValues { mDays.begin(), mDays.upper_bound(maxPerMonth) };
+    }
+}
+
 TimeUnit::TimeUnit(const PossibleValues& range) :
     _pParentUnit(nullptr),
     _pChildUnit(nullptr),
@@ -81,6 +107,7 @@ void TimeUnit::resetToLast()
     }
     else
     {
+        calculatePosibRange();
         _value = *_possibValues.rbegin();
         if(_pChildUnit)
         {
@@ -177,41 +204,41 @@ TimeUnit::~TimeUnit()
 
 }
 
-bool TimeUnit::applyActionRecursivelyFromRoot(TimeUnit *pUnit, std::function<bool (TimeUnit *)> c)
+RecursiveAction TimeUnit::applyActionRecursivelyFromRoot(TimeUnit *pUnit, std::function<RecursiveAction (TimeUnit *)> actionOn)
 {
     if(pUnit)
     {
-        if(c(pUnit))
+        if(actionOn(pUnit) == RecursiveAction::STOP)
         {
-            return true;
+            return RecursiveAction::STOP;
         }
         else
         {
-            return applyActionRecursivelyFromRoot(pUnit->_pChildUnit, c);
+            return applyActionRecursivelyFromRoot(pUnit->_pChildUnit, actionOn);
         }
     }
     else
     {
-        return false;
+        return RecursiveAction::NONSTOP;
     }
 }
 
-bool TimeUnit::applyActionRecursivelyFromLeaf(TimeUnit *pUnit, std::function<bool (TimeUnit *)> c)
+RecursiveAction TimeUnit::applyActionRecursivelyFromLeaf(TimeUnit *pUnit, std::function<RecursiveAction (TimeUnit *)> actionOn)
 {
     if(pUnit)
     {
-        if(applyActionRecursivelyFromLeaf(pUnit->_pChildUnit, c))
+        if(applyActionRecursivelyFromLeaf(pUnit->_pChildUnit, actionOn) == RecursiveAction::STOP)
         {
-            return true;
+            return RecursiveAction::STOP;
         }
         else
         {
-            return c(pUnit);
+            return actionOn(pUnit);
         }
     }
     else
     {
-        return false;
+        return RecursiveAction::NONSTOP;
     }
 }
 
@@ -233,53 +260,39 @@ void TimeUnit::specifyTime(TimeUnit *pClockWise, const std::vector<int> &cTime)
 
 void MDay::setWDayRange(const TimeUnit::PossibleValues &range)
 {
-    _wDayRange = range;
+    _possibWDays = range;
 }
 
 void MDay::setMDayRange(const TimeUnit::PossibleValues &range)
 {
-    _mDayRange = range;
+    _possibMDays = range;
 }
 
 TimeUnit::PossibleValues &MDay::calculatePosibRange()
 {
-    int maxPermonth = 31;
-    _possibValues = _mDayRange;
-    if (_pParentUnit)
+    auto pMonth = _pParentUnit;
+    auto pYear = pMonth->_pParentUnit;
+    _possibValues.clear();
+    if(_possibMDays.size() == 31)
     {
-        TimeUnit* pMonth = _pParentUnit;
-        TimeUnit* pYear = _pParentUnit->_pParentUnit;
-        if (1 == pMonth->currentValue()) //Febuary
+        if(_possibWDays.size() == 7)
         {
-            if (pYear && TimeUtil::isLeapYear(pYear->currentValue()))
-            {
-                maxPermonth = 29;
-            }
-            else
-            {
-                maxPermonth = 28;
-            }
+            _possibValues = Internal::getPossibMdays(_possibMDays, pMonth->currentValue(), pYear->currentValue());
         }
-        else if (_pParentUnit->currentValue() % 2 == 1)
+        else
         {
-            maxPermonth = 30;
+            _possibValues = Internal::getMDayOf(_possibWDays, pMonth->currentValue(), pYear->currentValue());
         }
-        // calculate the week day of the first mday in month:
-        // remember that mday always starts from 1. 1-31
-        if (pYear)
-        {
-            int startWDay = TimeUtil::getWeekDayOf(pYear->currentValue(), pMonth->currentValue(), 1);
-            int deviate = startWDay - 1;
-            PossibleValues allWDaysOfThisMonth;
-            for (int i = 1; i <= maxPermonth; ++i)
-            {
-                int wday = (deviate + i) % 7;
-                if (_wDayRange.find(wday) != _wDayRange.end())
-                {
-                    _possibValues.insert(i);
-                }
-            }
-        }
+    }
+    else if(_possibWDays.size() == 7)
+    {
+        _possibValues = Internal::getPossibMdays(_possibMDays, pMonth->currentValue(), pYear->currentValue());
+    }
+    else
+    {
+        _possibValues = Internal::getPossibMdays(_possibMDays, pMonth->currentValue(), pYear->currentValue());
+        auto mdaysOfWdays = Internal::getMDayOf(_possibWDays, pMonth->currentValue(), pYear->currentValue());
+        _possibValues.insert(mdaysOfWdays.begin(), mdaysOfWdays.end());
     }
     return _possibValues;
 }
