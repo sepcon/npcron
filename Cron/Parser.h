@@ -9,15 +9,18 @@
 
 namespace Cron
 {
-	class Parser
-	{
-    public:
-        Parser(const std::string& expression = "");
-        void parse(const std::string& expression);
-        Cron::Clock createClock();
-	private:
-        void reset();
-        TimeUnit::PossibleValues _cronFieldValues[FieldType::cfFieldCount];
-	};
-	
+
+using ImpossibleValueException = std::string;
+
+class Parser
+{
+public:
+    Parser(const std::string& expression = "");
+    void parse(const std::string& expression);
+    Cron::Clock createClock();
+private:
+    void reset();
+    TimeUnit::PossibleValues _cronFieldValues[FieldType::cfFieldCount];
+};
+
 }

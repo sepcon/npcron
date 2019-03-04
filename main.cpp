@@ -32,18 +32,18 @@ int main()
 {
     std::string expression;
     Cron::Parser parser;
-    expression = "28 21 * * MON-FRI/2";
+    expression = "0 0 30 2 MON";
     std::cout << "Your expression is: " << expression << std::endl;
     try
     {
         parser.parse(expression);
         auto clock = parser.createClock();
-        for(int i = 0; i < 5; ++i )
-        {
-            printTime(clock.getBack(false));
-        }
+//        for(int i = 0; i < 5; ++i )
+//        {
+//            printTime(clock.getBack(false));
+//        }
 //        clock.syncWithLocalTime();
-        for(int i = 0; i < 10000; ++i )
+        for(int i = 0; i < 50; ++i )
         {
             printTime(clock.getNext(false));
         }

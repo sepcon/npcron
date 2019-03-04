@@ -31,6 +31,42 @@ std::string toString(size_t timeField)
     }
 }
 
+bool isValidDayField(const TimeUnit::PossibleValues& possibMDay, const TimeUnit::PossibleValues& possibWDay, const TimeUnit::PossibleValues& possibMonths)
+{
+    TimeUnit year;
+    TimeUnit month;
+    MDay mday;
+    year.attach(nullptr, &month);
+    month.attach(&year, &mday);
+    mday.attach(&month, nullptr);
+
+    mday.setMDayRange(possibMDay);
+    mday.setWDayRange(possibWDay);
+    auto hasPossibleValues = [&month, &possibMonths](MDay& day)
+    {
+        for(auto i : possibMonths)
+        {
+            month.setCurrentValue(i - 1);
+            if(!day.calculatePosibRange().empty())
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    bool valid = true;
+    year.setCurrentValue(2001 - 1900); //Common year
+    if(!hasPossibleValues(mday))
+    {
+        year.setCurrentValue(2020 - 1900); //leap year
+        if(!hasPossibleValues(mday))
+        {
+            valid = false;
+        }
+    }
+    return valid;
+}
 }
 
 static void collectValues(TimeUnit::PossibleValues& possibValues, const ExpInfo& info)
@@ -99,6 +135,10 @@ void Parser::parse(const std::string & expression)
             }
         }
 
+        if(!Internal::isValidDayField(_cronFieldValues[FieldType::cfMDay], _cronFieldValues[FieldType::cfWDay], _cronFieldValues[FieldType::cfMon]))
+        {
+            throw ImpossibleValueException("Doesn't have possible value for fields DAY");
+        }
     }
 }
 

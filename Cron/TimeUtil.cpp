@@ -1,26 +1,35 @@
 #include "TimeUtil.h"
+#include "bitset"
 
 namespace Cron {
 
 unsigned int TimeUtil::dayEndOfMonth(unsigned int month, int year)
 {
-    unsigned int maxPermonth = 31;
-    if (1 == month) //Febuary
+    if(month < 11)
     {
-        if (TimeUtil::isLeapYear(year))
+        unsigned int maxPermonth = 31;
+        static const std::bitset<12> MONTH31s{"101011010101"}; //[11 .. <- .. 0 ] the months that have 31 days
+        if (1 == month) //Febuary
         {
-            maxPermonth = 29;
+            if (TimeUtil::isLeapYear(year))
+            {
+                maxPermonth = 29;
+            }
+            else
+            {
+                maxPermonth = 28;
+            }
         }
-        else
+        else if (!MONTH31s.test(month))
         {
-            maxPermonth = 28;
+            maxPermonth = 30;
         }
+        return maxPermonth;
     }
-    else if (month % 2 == 1)
+    else
     {
-        maxPermonth = 30;
+        return 0;
     }
-    return maxPermonth;
 }
 
 std::tm* TimeUtil::localTime()
@@ -39,7 +48,7 @@ int TimeUtil::getWeekDayOf(int year, int mon, int day)
 
 bool TimeUtil::isLeapYear(int year)
 {
-    return year % 4 == 0;
+    return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
 }
 
 tm TimeUtil::createTimeInfo(int year, int month, int mDay, int hour, int min, int sec)

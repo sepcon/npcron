@@ -85,11 +85,8 @@ void TimeUnit::setPosibValues(TimeUnit::PossibleValues &&range)
 
 void TimeUnit::resetToBeginning()
 {
-    if(rangeAny())
-    {
-        return;
-    }
-    else
+    calculatePosibRange();
+    if(!_possibValues.empty())
     {
         _value = *_possibValues.begin();
         if(_pChildUnit)
@@ -97,22 +94,26 @@ void TimeUnit::resetToBeginning()
             _pChildUnit->resetToBeginning();
         }
     }
+    else if(_pParentUnit)
+    {
+        _pParentUnit->stepNext();
+    }
 }
 
 void TimeUnit::resetToLast()
 {
-    if(rangeAny())
+    calculatePosibRange();
+    if(!_possibValues.empty())
     {
-        return;
-    }
-    else
-    {
-        calculatePosibRange();
         _value = *_possibValues.rbegin();
         if(_pChildUnit)
         {
             _pChildUnit->resetToLast();
         }
+    }
+    else if(_pParentUnit)
+    {
+        _pParentUnit->stepBack();
     }
 }
 
