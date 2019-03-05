@@ -32,7 +32,7 @@ int main()
 {
     std::string expression;
     Cron::Parser parser;
-    expression = "0 0 30 2 MON";
+    expression = "0 0 30 2 *";
     std::cout << "Your expression is: " << expression << std::endl;
     try
     {

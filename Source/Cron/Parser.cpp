@@ -137,7 +137,7 @@ void Parser::parse(const std::string & expression)
 
         if(!Internal::isValidDayField(_cronFieldValues[FieldType::cfMDay], _cronFieldValues[FieldType::cfWDay], _cronFieldValues[FieldType::cfMon]))
         {
-            throw ImpossibleValueException("Doesn't have possible value for fields DAY");
+            throw ImpossibleValueException("Don't have possible value for fields DAY");
         }
     }
 }
