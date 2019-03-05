@@ -26,7 +26,7 @@ Try to make it easy to use with simple interfaces:
         std::cout << s1 << std::endl;
     }
 ```
-# Output:
+    **Possible output:**
     your next action from now is at: Mon Apr 01 00:00:00 2019
     Next 10 scheduled Time from now is: 
     Thu Apr 04 00:00:00 2019
@@ -39,3 +39,22 @@ Try to make it easy to use with simple interfaces:
     Thu Apr 25 00:00:00 2019
     Mon Jul 01 00:00:00 2019
     Thu Jul 04 00:00:00 2019
+
+# Error report
+```cpp
+try
+    {
+        std::string expression = "0 0 35 2 *";
+        auto clock = Cron::Parser(expression).createClock();
+    }
+    catch(const Cron::BadSyntaxException& s)
+    {
+        std::cout << s << std::endl;
+    }
+    catch(const Cron::ImpossibleValueException& s1)
+    {
+        std::cout << s1 << std::endl;
+    }
+```
+    **Bad Syntax at field MDAY[ 35 ]: Invalid field mday with value: 35**
+
