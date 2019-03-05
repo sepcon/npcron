@@ -26,7 +26,9 @@ Try to make it easy to use with simple interfaces:
         std::cout << s1 << std::endl;
     }
 ```
-    **Possible output:**
+    
+**Possible output:**
+
     your next action from now is at: Mon Apr 01 00:00:00 2019
     Next 10 scheduled Time from now is: 
     Thu Apr 04 00:00:00 2019
@@ -40,7 +42,7 @@ Try to make it easy to use with simple interfaces:
     Mon Jul 01 00:00:00 2019
     Thu Jul 04 00:00:00 2019
 
-# Error report
+
 ```cpp
 try
     {
@@ -56,5 +58,6 @@ try
         std::cout << s1 << std::endl;
     }
 ```
-    **Bad Syntax at field MDAY[ 35 ]: Invalid field mday with value: 35**
+**Output:**
 
+    Bad Syntax at field MDAY[ 35 ]: Invalid field mday with value: 35
