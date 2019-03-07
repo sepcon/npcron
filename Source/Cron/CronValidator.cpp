@@ -63,9 +63,17 @@ static std::string replace(std::string word, const std::string& with, const std:
     return word;
 }
 
-BadSyntaxException badSyntaxException(FieldType field, const std::string& expression)
+static std::string getValidRangeInStringOf(FieldType field)
 {
-    return std::string("Invalid field ") + gFieldNames[field] + " with value: " + expression;
+    return "[" + std::to_string(gValidFieldRanges[field].first)
+            + " - " +
+            std::to_string(gValidFieldRanges[field].second) + "]";
+}
+
+static BadSyntaxException badSyntaxException(FieldType field, const std::string& expression)
+{
+    return std::string("Invalid field ") + gFieldNames[field] + " with value: " + expression +
+            " - Note: Possible values must be in range:" + getValidRangeInStringOf(field);
 }
 
 bool isValidExpression(int from, int to, int step, FieldType field)
@@ -191,14 +199,7 @@ bool Validator::isValidRange(int min, int max, int step)
         if(gValidFieldRanges[_field].first <= min
                 && max <= gValidFieldRanges[_field].second)
         {
-            if(step > 0)
-            {
-                valid = min + step <= max;
-            }
-            else
-            {
-                valid = true;
-            }
+            valid = true;
         }
     }
     return valid;
@@ -218,7 +219,7 @@ bool Validator::validateSubExpression(const std::string & subExpr)
         {
             size_t idxOfSlash;
             int step = extractStepValue(subExpr, idxOfSlash);
-            if(step > 0 && gValidFieldRanges[_field].first + step <= gValidFieldRanges[_field].second)
+            if(step > 0)
             {
                 _subExprInfo.emplace_back(subExpr, ExpType::StepWholeRange, gValidFieldRanges[_field].first, gValidFieldRanges[_field].second, step);
                 _valid = true;
@@ -230,14 +231,7 @@ bool Validator::validateSubExpression(const std::string & subExpr)
         }
         else
         {
-            if(_field == FieldType::cfWDay)
-            {
-                _subExprInfo.emplace_back(subExpr, ExpType::Invalid);
-            }
-            else
-            {
-                _subExprInfo.emplace_back(subExpr, ExpType::AnyValue, gValidFieldRanges[_field].first, gValidFieldRanges[_field].second);
-            }
+            _subExprInfo.emplace_back(subExpr, ExpType::AnyValue, gValidFieldRanges[_field].first, gValidFieldRanges[_field].second);
         }
     }
     else if (contains(subExpr, '/'))
@@ -259,7 +253,7 @@ bool Validator::validateSubExpression(const std::string & subExpr)
         else
         {
             int startValue = std::atoi(subExpr.substr(0, idxOfSlash).c_str());
-            if(step > 0 && startValue >= gValidFieldRanges[_field].first && startValue + step <= gValidFieldRanges[_field].second)
+            if(step > 0 && isValidFiedValue(startValue) )
             {
                 _subExprInfo.emplace_back(subExpr, ExpType::StepFrom, startValue, gValidFieldRanges[_field].second, step);
             }
