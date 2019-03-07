@@ -5,7 +5,7 @@ namespace Cron {
 
 unsigned int TimeUtil::dayEndOfMonth(unsigned int month, int year)
 {
-    if(month < 11)
+    if(month <= 11)
     {
         unsigned int maxPermonth = 31;
         static const std::bitset<12> MONTH31s{"101011010101"}; //[11 .. <- .. 0 ] the months that have 31 days
