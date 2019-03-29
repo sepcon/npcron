@@ -8,6 +8,12 @@
 namespace Cron
 {
 
+enum TimePointAnchor
+{
+    FromNow,
+    FromSpecificPoint
+};
+
 class Clock
 {
 public:
@@ -20,15 +26,15 @@ public:
     ~Clock();
     bool isValid() const;
     void syncWithLocalTime();
-	void syncWithSpecialTime(const std::tm* tmTime);
-    sysclock::time_point getNext(bool fromNow = true);
-    sysclock::time_point getBack(bool fromNow = true);
-    std::string getNextCTime(bool fromNow = true);
-    std::string getBackCTime(bool fromNow = true);
+	void syncWithSpecialTime(const tm & tmTime);
+    sysclock::time_point getNext(TimePointAnchor anchor = FromNow);
+    sysclock::time_point getBack(TimePointAnchor anchor = FromNow);
+    std::string getNextCTime(TimePointAnchor anchor = FromNow);
+    std::string getBackCTime(TimePointAnchor anchor = FromNow);
     void specifyUnitsRange(const std::vector<TimeUnit::PossibleValues> &ranges);
 
 private:
-    sysclock::time_point doOneStep(int (TimeUnit::*step)(), bool fromNow);
+    sysclock::time_point doOneStep(int (TimeUnit::*step)(), TimePointAnchor anchor);
     void cloneFrom(const Clock& rhs);
     void moveFrom(Clock&& rhs);
     TimeUnit*   _pYear;

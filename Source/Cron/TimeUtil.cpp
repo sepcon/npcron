@@ -32,18 +32,20 @@ unsigned int TimeUtil::dayEndOfMonth(unsigned int month, int year)
     }
 }
 
-std::tm* TimeUtil::localTime()
+std::tm TimeUtil::localTime()
 {
 	auto ttNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-	return std::localtime(&ttNow);
+    std::tm tmlocal;
+    ::localtime_s(&tmlocal, &ttNow);
+    return tmlocal;
 }
 
 int TimeUtil::getWeekDayOf(int year, int mon, int day)
 {
-    std::tm tmTime = Cron::TimeUtil::createTimeInfo(year, mon, day);
-    auto timet = std::mktime(&tmTime);
-    auto ptmTime = std::localtime(&timet);
-    return ptmTime->tm_wday;
+    std::tm tmTime = createTimeInfo(year, mon, day);
+    auto timet = ::mktime(&tmTime);
+    ::localtime_s(&tmTime, &timet);
+    return tmTime.tm_wday;
 }
 
 bool TimeUtil::isLeapYear(int year)
@@ -62,8 +64,15 @@ tm TimeUtil::createTimeInfo(int year, int month, int mDay, int hour, int min, in
         year,       // int tm_year;
         0,          // int tm_wday;
         0,          // int tm_yday;
-        0,          // int tm_isdst;
+        -1,          // int tm_isdst;
     };
+}
+
+std::string TimeUtil::toCTime(time_t tmt)
+{
+    char sCTime[100];
+    ::ctime_s(sCTime, 100, &tmt);
+    return sCTime;
 }
 
 }

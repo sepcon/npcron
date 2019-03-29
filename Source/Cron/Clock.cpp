@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "Clock.h"
 #include "TimeUtil.h"
 
@@ -98,35 +97,33 @@ void Clock::syncWithLocalTime()
 	syncWithSpecialTime(TimeUtil::localTime());
 }
 
-void Clock::syncWithSpecialTime(const std::tm * tmTime)
+void Clock::syncWithSpecialTime(const std::tm& tmTime)
 {
-    if (tmTime && _pYear)
+    if (_pYear)
 	{
-        TimeUnit::specifyTime(_pYear, std::vector<int>{tmTime->tm_year, tmTime->tm_mon, tmTime->tm_mday, tmTime->tm_hour, tmTime->tm_min});
+        TimeUnit::specifyTime(_pYear, std::vector<int>{tmTime.tm_year, tmTime.tm_mon, tmTime.tm_mday, tmTime.tm_hour, tmTime.tm_min});
         TimeUnit::applyActionRecursivelyFromRoot(_pYear, [](TimeUnit* pUnit) { pUnit->calculatePosibRange(); return RecursiveAction::NONSTOP;});
 	}
 }
 
-std::chrono::system_clock::time_point Clock::getNext(bool fromNow)
+std::chrono::system_clock::time_point Clock::getNext(TimePointAnchor anchor)
 {
-    return doOneStep(&TimeUnit::stepNext, fromNow);
+    return doOneStep(&TimeUnit::stepNext, anchor);
 }
 
-std::chrono::system_clock::time_point Clock::getBack(bool fromNow)
+std::chrono::system_clock::time_point Clock::getBack(TimePointAnchor anchor)
 {
-    return doOneStep(&TimeUnit::stepBack, fromNow);
+    return doOneStep(&TimeUnit::stepBack, anchor);
 }
 
-std::string Clock::getNextCTime(bool fromNow)
+std::string Clock::getNextCTime(TimePointAnchor anchor)
 {
-    auto next = sysclock::to_time_t(getNext(fromNow));
-    return std::string(std::ctime(&next));
+    return TimeUtil::toCTime(sysclock::to_time_t(getNext(anchor)));
 }
 
-std::string Clock::getBackCTime(bool fromNow)
+std::string Clock::getBackCTime(TimePointAnchor anchor)
 {
-    auto back = sysclock::to_time_t(getBack(fromNow));
-    return std::string(std::ctime(&back));
+    return TimeUtil::toCTime(sysclock::to_time_t(getBack(anchor)));
 }
 
 void Clock::specifyUnitsRange(const std::vector<TimeUnit::PossibleValues>& ranges)
@@ -136,9 +133,9 @@ void Clock::specifyUnitsRange(const std::vector<TimeUnit::PossibleValues>& range
     TimeUnit::applyActionRecursivelyFromRoot(this->_pYear, setPossibValues);
 }
 
-std::chrono::system_clock::time_point Clock::doOneStep(int (TimeUnit::*step)(), bool fromNow)
+std::chrono::system_clock::time_point Clock::doOneStep(int (TimeUnit::*step)(), TimePointAnchor anchor)
 {
-    if(fromNow) syncWithLocalTime();
+    if(anchor == FromNow) { syncWithLocalTime(); }
     if(_pYear)
     {
         //year must be current year
