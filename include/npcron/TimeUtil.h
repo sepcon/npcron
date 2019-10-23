@@ -1,7 +1,7 @@
 #ifndef TIMEUTIL_H
 #define TIMEUTIL_H
 
-#include "chrono.h"
+#include <npcron/chrono.h>
 #include <string>
 
 namespace Cron {

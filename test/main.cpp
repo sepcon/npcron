@@ -1,6 +1,6 @@
-#include "Cron/Clock.h"
-#include "Cron/TimeUtil.h"
-#include "Cron/Parser.h"
+#include <npcron/Clock.h>
+#include <npcron/TimeUtil.h>
+#include <npcron/Parser.h>
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -30,7 +30,7 @@ int main()
 {
     std::string expression;
     Cron::Parser parser;
-    expression = "0 */1 * * *";
+    expression = "* * * * *";
     std::cout << "Your expression is: " << expression << std::endl;
 
     try
@@ -49,7 +49,5 @@ int main()
         std::cout << s << std::endl;
     }
 
-
-//    std::getchar();
     return 0;
 }

@@ -2,7 +2,7 @@
 #include <exception>
 #include <sstream>
 #include <iostream>
-#include "CronValidator.h"
+#include <npcron/CronValidator.h>
 
 namespace Cron
 {

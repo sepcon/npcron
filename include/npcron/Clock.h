@@ -1,9 +1,9 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
-#include "chrono.h"
+#include <npcron/chrono.h>
+#include <npcron/TimeUnit.h>
 #include <vector>
-#include "TimeUnit.h"
 
 namespace Cron
 {

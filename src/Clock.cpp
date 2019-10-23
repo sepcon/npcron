@@ -1,5 +1,5 @@
-#include "Clock.h"
-#include "TimeUtil.h"
+#include <npcron/Clock.h>
+#include <npcron/TimeUtil.h>
 
 
 namespace Cron
